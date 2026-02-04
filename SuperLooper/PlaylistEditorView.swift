@@ -51,9 +51,11 @@ struct PlaylistEditorView: View {
             }
             .sheet(isPresented: $showingMediaImport) {
                 MediaImportView(playlistManager: playlistManager)
+                    .preferredColorScheme(.dark)
             }
             .sheet(item: $editingItem) { item in
                 ItemEditorView(playlistManager: playlistManager, item: item)
+                    .preferredColorScheme(.dark)
             }
             .alert("Delete Item?", isPresented: $showingDeleteAlert, presenting: itemToDelete) { item in
                 Button("Cancel", role: .cancel) { }
@@ -184,18 +186,25 @@ struct PlaylistEditorRow: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    
-                    Text("•")
-                        .font(.caption)
-                        .foregroundColor(.secondary.opacity(0.5))
-                    
-                    Text(item.transition.displayName)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
                 }
             }
             
             Spacer()
+            
+            // Transition badge (like Keynote transition indicator)
+            HStack(spacing: 4) {
+                Image(systemName: item.transition.normalized.iconName)
+                    .font(.caption)
+                Text(item.transition.normalized.displayName)
+                    .font(.caption2)
+            }
+            .foregroundColor(.secondary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+                Capsule()
+                    .fill(Color.secondary.opacity(0.15))
+            )
             
             // Chevron
             Image(systemName: "chevron.right")
@@ -216,6 +225,7 @@ struct ItemEditorView: View {
     @State private var name: String = ""
     @State private var duration: Double = 10
     @State private var transition: TransitionType = .dissolve
+    @State private var transitionDuration: Double = 0.5
     
     var body: some View {
         NavigationStack {
@@ -240,18 +250,7 @@ struct ItemEditorView: View {
                     }
                 }
                 
-                Section("Transition") {
-                    Picker("Transition", selection: $transition) {
-                        ForEach(TransitionType.allCases, id: \.self) { type in
-                            Text(type.displayName).tag(type)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    
-                    Text(transition.description)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
+                TransitionPickerSection(transition: $transition, transitionDuration: $transitionDuration)
                 
                 Section("Content Type") {
                     HStack {
@@ -278,6 +277,39 @@ struct ItemEditorView: View {
                             Text("Custom HTML")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
+                        case .liveWeb(let url, _):
+                            Text(url.host ?? url.absoluteString)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        case .customHTML(let filename):
+                            Text(filename)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        case .titleSlide(let data):
+                            Text(data.headline)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                        case .featuredPerson(let data):
+                            Text(data.name)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        case .schedule(let data):
+                            Text("\(data.events.count) events")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        case .leaderboard(let data):
+                            Text("\(data.entries.count) entries")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        case .countdown(let data):
+                            Text(data.mode == .targetTime ? "Target Time" : "Duration")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        case .weather(let data):
+                            Text(data.locationName.isEmpty ? "Weather" : data.locationName)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
                     }
                 }
@@ -301,7 +333,8 @@ struct ItemEditorView: View {
             .onAppear {
                 name = item.name
                 duration = item.duration
-                transition = item.transition
+                transition = item.transition.normalized
+                transitionDuration = item.transitionDuration
             }
         }
     }
@@ -315,6 +348,7 @@ struct ItemEditorView: View {
         updatedItem.name = name
         updatedItem.duration = duration
         updatedItem.transition = transition
+        updatedItem.transitionDuration = transitionDuration
         
         playlistManager.items[index] = updatedItem
         playlistManager.savePlaylist()

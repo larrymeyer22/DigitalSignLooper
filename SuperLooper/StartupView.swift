@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct StartupView: View {
     var libraryManager = PlaylistLibraryManager.shared
@@ -17,17 +18,20 @@ struct StartupView: View {
     @State private var renameText = ""
     @State private var playlistToDelete: PlaylistInfo?
     @State private var showDeleteConfirm = false
+    @State private var showImportPicker = false
+    @State private var importError: String?
+    
+    // Edit mode for reordering and deleting
+    @State private var isEditing = false
+    @State private var orderedPlaylists: [PlaylistInfo] = []
+    @State private var draggedPlaylist: PlaylistInfo?
     
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background gradient
-                LinearGradient(
-                    colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                // Background - dark gray
+                Color(white: 0.12)
+                    .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
                     // Header
@@ -82,11 +86,65 @@ struct StartupView: View {
                 playlistToDelete = nil
             }
             Button("Delete", role: .destructive) {
+                // Remove from ordered list first
+                orderedPlaylists.removeAll { $0.id == playlist.id }
+                savePlaylistOrder()
+                // Then delete from storage
                 libraryManager.deletePlaylist(playlist)
                 playlistToDelete = nil
             }
         } message: { playlist in
             Text("Are you sure you want to delete \"\(playlist.name)\"? This cannot be undone.")
+        }
+        .alert("Import Error", isPresented: .constant(importError != nil)) {
+            Button("OK") { importError = nil }
+        } message: {
+            Text(importError ?? "Unknown error")
+        }
+        .fileImporter(
+            isPresented: $showImportPicker,
+            allowedContentTypes: [.folder, .json, .zip, .archive],
+            allowsMultipleSelection: false
+        ) { result in
+            handleImport(result)
+        }
+        .preferredColorScheme(.dark)
+    }
+    
+    // MARK: - Import Handler
+    
+    private func handleImport(_ result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first else { return }
+            
+            // Check if it's a zip file
+            if url.pathExtension.lowercased() == "zip" {
+                importError = "Please unzip the file first:\n\n1. Open Files app\n2. Find the .zip file\n3. Tap and hold → Uncompress\n4. Then import the folder or playlist.json"
+                return
+            }
+            
+            Task { @MainActor in
+                do {
+                    let imported: Playlist
+                    
+                    if url.pathExtension.lowercased() == "json" {
+                        // User selected playlist.json directly
+                        imported = try await PlaylistStorageManager.shared.importPlaylistFromJSON(at: url)
+                    } else {
+                        // User selected folder
+                        imported = try await PlaylistStorageManager.shared.importPlaylistFolder(from: url)
+                    }
+                    
+                    // Select the newly imported playlist
+                    selectedPlaylist = imported
+                } catch {
+                    importError = error.localizedDescription
+                }
+            }
+            
+        case .failure(let error):
+            importError = error.localizedDescription
         }
     }
     
@@ -94,6 +152,27 @@ struct StartupView: View {
     
     private var headerView: some View {
         VStack(spacing: 16) {
+            // Edit button row
+            HStack {
+                Spacer()
+                if !libraryManager.playlists.isEmpty {
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isEditing.toggle()
+                        }
+                    }) {
+                        Text(isEditing ? "Done" : "Edit")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color(white: 0.25))
+                            .cornerRadius(8)
+                    }
+                }
+            }
+            .padding(.horizontal, 40)
+            
             Image(systemName: "play.rectangle.on.rectangle.fill")
                 .font(.system(size: 70))
                 .foregroundStyle(.white)
@@ -103,7 +182,7 @@ struct StartupView: View {
                 .font(.system(size: 42, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
             
-            Text("Select a playlist to get started")
+            Text(isEditing ? "Drag to reorder, tap ✕ to delete" : "Select a playlist to get started")
                 .font(.title3)
                 .foregroundColor(.white.opacity(0.8))
         }
@@ -130,14 +209,34 @@ struct StartupView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
             
-            Button(action: { showingNewPlaylistAlert = true }) {
-                Label("Create Playlist", systemImage: "plus.circle.fill")
+            HStack(spacing: 16) {
+                Button(action: { showingNewPlaylistAlert = true }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundColor(Color(red: 0.25, green: 0.41, blue: 0.88))
+                        Text("Create Playlist")
+                            .foregroundColor(.white)
+                    }
                     .font(.headline)
-                    .padding(.horizontal, 32)
+                    .padding(.horizontal, 24)
                     .padding(.vertical, 16)
-                    .background(Color.white)
-                    .foregroundColor(.blue)
+                    .background(Color(white: 0.25))
                     .cornerRadius(16)
+                }
+                
+                Button(action: { showImportPicker = true }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "square.and.arrow.down")
+                            .foregroundColor(Color(red: 0.25, green: 0.41, blue: 0.88))
+                        Text("Import Playlist")
+                            .foregroundColor(.white)
+                    }
+                    .font(.headline)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 16)
+                    .background(Color(white: 0.25))
+                    .cornerRadius(16)
+                }
             }
             .padding(.top, 8)
             
@@ -151,45 +250,82 @@ struct StartupView: View {
         VStack(spacing: 20) {
             ScrollView {
                 LazyVGrid(columns: [
-                    GridItem(.adaptive(minimum: 280, maximum: 350), spacing: 20)
+                    GridItem(.adaptive(minimum: 280), spacing: 20)
                 ], spacing: 20) {
-                    // New playlist card
-                    NewPlaylistCard {
-                        showingNewPlaylistAlert = true
+                    // New playlist card (hidden in edit mode)
+                    if !isEditing {
+                        NewPlaylistCard {
+                            showingNewPlaylistAlert = true
+                        }
+                        
+                        // Import playlist card
+                        ImportPlaylistCard {
+                            showImportPicker = true
+                        }
                     }
                     
                     // Existing playlists
-                    ForEach(libraryManager.playlists.sorted(by: { $0.modifiedAt > $1.modifiedAt })) { playlist in
-                        PlaylistCard(playlist: playlist) {
-                            selectPlaylist(playlist)
-                        }
-                        .contextMenu {
-                            Button {
-                                selectPlaylist(playlist)
-                            } label: {
-                                Label("Open", systemImage: "play.fill")
-                            }
-                            
-                            Button {
-                                renameText = playlist.name
-                                playlistToRename = playlist
-                            } label: {
-                                Label("Rename", systemImage: "pencil")
-                            }
-                            
-                            Button {
-                                libraryManager.duplicatePlaylist(playlist)
-                            } label: {
-                                Label("Duplicate", systemImage: "doc.on.doc")
-                            }
-                            
-                            Divider()
-                            
-                            Button(role: .destructive) {
+                    ForEach(orderedPlaylists, id: \.id) { playlist in
+                        PlaylistCardWithEdit(
+                            playlist: playlist,
+                            isEditing: isEditing,
+                            onTap: {
+                                if !isEditing {
+                                    selectPlaylist(playlist)
+                                }
+                            },
+                            onDelete: {
                                 playlistToDelete = playlist
                                 showDeleteConfirm = true
-                            } label: {
-                                Label("Delete", systemImage: "trash")
+                            },
+                            onLongPress: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    isEditing = true
+                                }
+                            }
+                        )
+                        .onDrag {
+                            draggedPlaylist = playlist
+                            return NSItemProvider(object: playlist.id.uuidString as NSString)
+                        }
+                        .onDrop(of: [.text], delegate: PlaylistDropDelegate(
+                            item: playlist,
+                            items: $orderedPlaylists,
+                            draggedItem: $draggedPlaylist,
+                            onReorder: savePlaylistOrder
+                        ))
+                        .contextMenu {
+                            if !isEditing {
+                                Button {
+                                    selectPlaylist(playlist)
+                                } label: {
+                                    Label("Open", systemImage: "play.fill")
+                                }
+                                
+                                Button {
+                                    renameText = playlist.name
+                                    playlistToRename = playlist
+                                } label: {
+                                    Label("Rename", systemImage: "pencil")
+                                }
+                                
+                                Button {
+                                    Task {
+                                        _ = try? await libraryManager.duplicatePlaylist(playlist)
+                                        refreshOrderedPlaylists()
+                                    }
+                                } label: {
+                                    Label("Duplicate", systemImage: "doc.on.doc")
+                                }
+                                
+                                Divider()
+                                
+                                Button(role: .destructive) {
+                                    playlistToDelete = playlist
+                                    showDeleteConfirm = true
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
                             }
                         }
                     }
@@ -198,6 +334,46 @@ struct StartupView: View {
                 .padding(.bottom, 40)
             }
         }
+        .onAppear {
+            refreshOrderedPlaylists()
+        }
+        .onChange(of: libraryManager.playlists) { _, _ in
+            refreshOrderedPlaylists()
+        }
+    }
+    
+    // MARK: - Playlist Order Management
+    
+    private func refreshOrderedPlaylists() {
+        // Load saved order or use default (by modified date)
+        let savedOrder = UserDefaults.standard.stringArray(forKey: "PlaylistOrder") ?? []
+        
+        let playlists = libraryManager.playlists
+        
+        if savedOrder.isEmpty {
+            // Default: sort by modified date
+            orderedPlaylists = playlists.sorted { $0.modifiedAt > $1.modifiedAt }
+        } else {
+            // Use saved order, with new playlists at the end
+            var ordered: [PlaylistInfo] = []
+            for idString in savedOrder {
+                if let playlist = playlists.first(where: { $0.id.uuidString == idString }) {
+                    ordered.append(playlist)
+                }
+            }
+            // Add any playlists not in saved order
+            for playlist in playlists {
+                if !ordered.contains(where: { $0.id == playlist.id }) {
+                    ordered.append(playlist)
+                }
+            }
+            orderedPlaylists = ordered
+        }
+    }
+    
+    private func savePlaylistOrder() {
+        let order = orderedPlaylists.map { $0.id.uuidString }
+        UserDefaults.standard.set(order, forKey: "PlaylistOrder")
     }
     
     // MARK: - Actions
@@ -230,37 +406,172 @@ struct PlaylistCard: View {
                 HStack {
                     Image(systemName: "play.rectangle.fill")
                         .font(.title)
-                        .foregroundColor(.blue)
+                        .foregroundColor(.gray)
                     
                     Spacer()
                     
                     Text("\(playlist.itemCount)")
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .foregroundColor(.white)
                     +
                     Text(" items")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.gray)
                 }
                 
-                Text(playlist.name)
+                Text(playlist.name.isEmpty ? "(Unnamed)" : playlist.name)
                     .font(.headline)
-                    .foregroundColor(.primary)
+                    .foregroundColor(.white)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
                 
                 Text("Modified \(playlist.modifiedAt.formatted(.relative(presentation: .named)))")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.gray)
             }
             .padding(20)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.systemBackground))
+            .frame(maxWidth: .infinity, minHeight: 130, alignment: .leading)
+            .background(Color(white: 0.18))
             .cornerRadius(16)
-            .shadow(color: .black.opacity(0.1), radius: 10, y: 4)
+            .shadow(color: .black.opacity(0.3), radius: 10, y: 4)
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Playlist Card With Edit Mode
+
+struct PlaylistCardWithEdit: View {
+    let playlist: PlaylistInfo
+    let isEditing: Bool
+    let onTap: () -> Void
+    let onDelete: () -> Void
+    let onLongPress: () -> Void
+    
+    @State private var isPressed = false
+    @State private var wiggleRotation: Double = 0
+    
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            // Main card content
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Image(systemName: "play.rectangle.fill")
+                        .font(.title)
+                        .foregroundColor(.gray)
+                    
+                    Spacer()
+                    
+                    Text("\(playlist.itemCount)")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                    +
+                    Text(" items")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                }
+                
+                Text(playlist.name.isEmpty ? "(Unnamed)" : playlist.name)
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                
+                Text("Modified \(playlist.modifiedAt.formatted(.relative(presentation: .named)))")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity, minHeight: 130, alignment: .leading)
+            .background(Color(white: 0.18))
+            .cornerRadius(16)
+            .shadow(color: .black.opacity(0.3), radius: 10, y: 4)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(isEditing ? Color.blue.opacity(0.5) : Color.clear, lineWidth: 2)
+            )
+            .scaleEffect(isPressed ? 0.98 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: isPressed)
+            // Wiggle animation in edit mode
+            .rotationEffect(.degrees(wiggleRotation))
+            .onChange(of: isEditing) { _, editing in
+                if editing {
+                    // Start wiggle
+                    withAnimation(.easeInOut(duration: 0.1).repeatForever(autoreverses: true)) {
+                        wiggleRotation = 1.0
+                    }
+                } else {
+                    // Stop wiggle
+                    withAnimation(.easeInOut(duration: 0.1)) {
+                        wiggleRotation = 0
+                    }
+                }
+            }
+            .onAppear {
+                // Handle case where view appears already in edit mode
+                if isEditing {
+                    withAnimation(.easeInOut(duration: 0.1).repeatForever(autoreverses: true)) {
+                        wiggleRotation = 1.0
+                    }
+                }
+            }
+            
+            // Delete badge (only in edit mode)
+            if isEditing {
+                Button(action: onDelete) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.white)
+                        .background(Circle().fill(Color.red))
+                }
+                .offset(x: -8, y: -8)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTap()
+        }
+        .onLongPressGesture(minimumDuration: 0.5, pressing: { pressing in
+            isPressed = pressing
+        }) {
+            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+            impactFeedback.impactOccurred()
+            onLongPress()
+        }
+    }
+}
+
+// MARK: - Playlist Drop Delegate
+
+struct PlaylistDropDelegate: DropDelegate {
+    let item: PlaylistInfo
+    @Binding var items: [PlaylistInfo]
+    @Binding var draggedItem: PlaylistInfo?
+    let onReorder: () -> Void
+    
+    func performDrop(info: DropInfo) -> Bool {
+        draggedItem = nil
+        onReorder()
+        return true
+    }
+    
+    func dropEntered(info: DropInfo) {
+        guard let draggedItem = draggedItem,
+              draggedItem.id != item.id,
+              let fromIndex = items.firstIndex(where: { $0.id == draggedItem.id }),
+              let toIndex = items.firstIndex(where: { $0.id == item.id }) else {
+            return
+        }
+        
+        withAnimation(.easeInOut(duration: 0.2)) {
+            items.move(fromOffsets: IndexSet(integer: fromIndex), toOffset: toIndex > fromIndex ? toIndex + 1 : toIndex)
+        }
+    }
+    
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        DropProposal(operation: .move)
     }
 }
 
@@ -269,25 +580,57 @@ struct PlaylistCard: View {
 struct NewPlaylistCard: View {
     let onTap: () -> Void
     
+    private let royalBlue = Color(red: 0.25, green: 0.41, blue: 0.88)
+    
     var body: some View {
         Button(action: onTap) {
             VStack(spacing: 12) {
                 Image(systemName: "plus.circle.fill")
                     .font(.system(size: 40))
-                    .foregroundColor(.blue)
+                    .foregroundColor(royalBlue)
                 
                 Text("New Playlist")
                     .font(.headline)
-                    .foregroundColor(.primary)
+                    .foregroundColor(.white)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 130)
-            .background(Color(.systemBackground).opacity(0.8))
+            .background(Color(white: 0.18))
             .cornerRadius(16)
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.blue.opacity(0.3), lineWidth: 2)
-                    .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [8]))
+                    .stroke(royalBlue.opacity(0.5), lineWidth: 2)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Import Playlist Card
+
+struct ImportPlaylistCard: View {
+    let onTap: () -> Void
+    
+    private let royalBlue = Color(red: 0.25, green: 0.41, blue: 0.88)
+    
+    var body: some View {
+        Button(action: onTap) {
+            VStack(spacing: 12) {
+                Image(systemName: "square.and.arrow.down.fill")
+                    .font(.system(size: 40))
+                    .foregroundColor(royalBlue)
+                
+                Text("Import Playlist")
+                    .font(.headline)
+                    .foregroundColor(.white)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 130)
+            .background(Color(white: 0.18))
+            .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(royalBlue.opacity(0.5), lineWidth: 2)
             )
         }
         .buttonStyle(.plain)

@@ -2,7 +2,7 @@
 //  ImageContentView.swift
 //  Super Looper
 //
-//  Displays images from the playlist's Images folder
+//  Displays images from the playlist's media folder
 //
 
 import SwiftUI
@@ -10,6 +10,8 @@ import SwiftUI
 struct ImageContentView: View {
     let filename: String
     var preloadedImage: UIImage? = nil
+    
+    @ObservedObject private var playlistManager = SharedPlaylistManager.shared.manager
     
     @State private var image: UIImage?
     @State private var isLoading = true
@@ -69,11 +71,11 @@ struct ImageContentView: View {
         isLoading = true
         loadError = false
         
-        // Load in background
-        DispatchQueue.global(qos: .userInitiated).async {
-            let loadedImage = FileSystemManager.shared.loadImage(filename: filename)
+        // Load using PlaylistManager (checks playlist media folder first)
+        Task {
+            let loadedImage = playlistManager.loadImage(filename: filename)
             
-            DispatchQueue.main.async {
+            await MainActor.run {
                 isLoading = false
                 if let loadedImage = loadedImage {
                     image = loadedImage
@@ -83,6 +85,7 @@ struct ImageContentView: View {
                         image = bundleImage
                     } else {
                         loadError = true
+                        print("❌ Failed to load image: \(filename)")
                     }
                 }
             }

@@ -7,7 +7,8 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		B99FBA572F1C3F9400B69AE5 /* SuperLooper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SuperLooper.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B99FBA572F1C3F9400B69AE5 /* DigitalSignLooper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DigitalSignLooper.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B9BCBA992F30579800C15C16 /* DigitalSignLooper.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DigitalSignLooper.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -32,6 +33,7 @@
 		B99FBA4E2F1C3F9400B69AE5 = {
 			isa = PBXGroup;
 			children = (
+				B9BCBA992F30579800C15C16 /* DigitalSignLooper.entitlements */,
 				B99FBA592F1C3F9400B69AE5 /* SuperLooper */,
 				B99FBA582F1C3F9400B69AE5 /* Products */,
 			);
@@ -40,7 +42,7 @@
 		B99FBA582F1C3F9400B69AE5 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				B99FBA572F1C3F9400B69AE5 /* SuperLooper.app */,
+				B99FBA572F1C3F9400B69AE5 /* DigitalSignLooper.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,9 +50,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		B99FBA562F1C3F9400B69AE5 /* SuperLooper */ = {
+		B99FBA562F1C3F9400B69AE5 /* DigitalSignLooper */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B99FBA622F1C3F9400B69AE5 /* Build configuration list for PBXNativeTarget "SuperLooper" */;
+			buildConfigurationList = B99FBA622F1C3F9400B69AE5 /* Build configuration list for PBXNativeTarget "DigitalSignLooper" */;
 			buildPhases = (
 				B99FBA532F1C3F9400B69AE5 /* Sources */,
 				B99FBA542F1C3F9400B69AE5 /* Frameworks */,
@@ -63,11 +65,11 @@
 			fileSystemSynchronizedGroups = (
 				B99FBA592F1C3F9400B69AE5 /* SuperLooper */,
 			);
-			name = SuperLooper;
+			name = DigitalSignLooper;
 			packageProductDependencies = (
 			);
 			productName = SuperLooper;
-			productReference = B99FBA572F1C3F9400B69AE5 /* SuperLooper.app */;
+			productReference = B99FBA572F1C3F9400B69AE5 /* DigitalSignLooper.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -85,7 +87,7 @@
 					};
 				};
 			};
-			buildConfigurationList = B99FBA522F1C3F9400B69AE5 /* Build configuration list for PBXProject "SuperLooper" */;
+			buildConfigurationList = B99FBA522F1C3F9400B69AE5 /* Build configuration list for PBXProject "DigitalSignLooper" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -99,7 +101,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				B99FBA562F1C3F9400B69AE5 /* SuperLooper */,
+				B99FBA562F1C3F9400B69AE5 /* DigitalSignLooper */,
 			);
 		};
 /* End PBXProject section */
@@ -178,7 +180,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -236,7 +238,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -251,11 +253,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = DigitalSignLooper.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = Y269EE926Y;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -266,8 +271,9 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.lmi.SuperLooper;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lmi.digitalsignlooper;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -283,11 +289,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = DigitalSignLooper.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = Y269EE926Y;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -298,8 +307,9 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.lmi.SuperLooper;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lmi.digitalsignlooper;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -313,7 +323,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		B99FBA522F1C3F9400B69AE5 /* Build configuration list for PBXProject "SuperLooper" */ = {
+		B99FBA522F1C3F9400B69AE5 /* Build configuration list for PBXProject "DigitalSignLooper" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B99FBA602F1C3F9400B69AE5 /* Debug */,
@@ -322,7 +332,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B99FBA622F1C3F9400B69AE5 /* Build configuration list for PBXNativeTarget "SuperLooper" */ = {
+		B99FBA622F1C3F9400B69AE5 /* Build configuration list for PBXNativeTarget "DigitalSignLooper" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B99FBA632F1C3F9400B69AE5 /* Debug */,

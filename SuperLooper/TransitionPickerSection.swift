@@ -14,11 +14,13 @@ struct TransitionPickerSection: View {
     
     var body: some View {
         Section {
-            Picker("Style", selection: $transition) {
+            Picker("Transition Type", selection: $transition) {
                 ForEach(TransitionType.availableCases, id: \.self) { type in
-                    Label(type.displayName, systemImage: type.iconName).tag(type)
+                    Text(type.displayName).tag(type)
                 }
             }
+            .pickerStyle(.menu)
+            .tint(.primary)
             
             Text(transition.normalized.description)
                 .font(.caption)
@@ -26,7 +28,7 @@ struct TransitionPickerSection: View {
             
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text("Speed")
+                    Text("Duration")
                     Spacer()
                     Text(String(format: "%.1fs", transitionDuration))
                         .foregroundColor(.secondary)
@@ -35,6 +37,8 @@ struct TransitionPickerSection: View {
             }
         } header: {
             Label("Transition", systemImage: "arrow.right.arrow.left")
+        } footer: {
+            Text("Transition effect when advancing to the next item")
         }
     }
 }

@@ -317,7 +317,7 @@ struct ExternalScreenView: View {
                 .font(.system(size: 120))
                 .foregroundColor(.gray.opacity(0.2))
             
-            Text("Super Looper")
+            Text("DigitalSignLooper")
                 .font(.system(size: 56, weight: .bold))
                 .foregroundColor(.gray.opacity(0.2))
         }
@@ -448,6 +448,58 @@ struct TemplateHTMLView: View {
     
     var body: some View {
         HTMLContentView(htmlContent: html)
+    }
+}
+
+// MARK: - Weather Content View
+
+struct WeatherContentView: View {
+    let data: WeatherData
+    let brandSettings: BrandSettings
+    
+    @State private var fetchedWeather: FetchedWeather?
+    @State private var isLoading = true
+    
+    var body: some View {
+        Group {
+            if let weather = fetchedWeather {
+                TemplateHTMLView(html: WeatherRenderer.render(
+                    data: data,
+                    weather: weather,
+                    brandSettings: brandSettings
+                ))
+            } else {
+                TemplateHTMLView(html: WeatherRenderer.renderLoading(
+                    data: data,
+                    brandSettings: brandSettings
+                ))
+            }
+        }
+        .task {
+            await loadWeather()
+        }
+    }
+    
+    private func loadWeather() async {
+        // Check cache first
+        if let cached = WeatherFetcher.shared.getCached(
+            latitude: data.latitude,
+            longitude: data.longitude
+        ) {
+            fetchedWeather = cached
+            isLoading = false
+            return
+        }
+        
+        // Fetch fresh data
+        if let weather = await WeatherFetcher.shared.fetchWeather(
+            latitude: data.latitude,
+            longitude: data.longitude,
+            days: data.forecastDays
+        ) {
+            fetchedWeather = weather
+            isLoading = false
+        }
     }
 }
 

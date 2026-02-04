@@ -185,6 +185,8 @@ struct ContentView: View {
             WeatherEditorView(playlistManager: playlistManager, editingIndex: index, existingData: data)
         case .leaderboard(let data):
             LeaderboardEditorView(playlistManager: playlistManager, editingIndex: index, existingData: data)
+        case .customHTML(let filename):
+            CustomHTMLEditorView(playlistManager: playlistManager, editingIndex: index, existingFilename: filename)
         case .image, .video:
             // Media item editor with duration
             MediaItemEditorView(playlistManager: playlistManager, itemIndex: index)
@@ -1422,6 +1424,7 @@ struct MediaItemEditorView: View {
     @State private var duration: Double = 10
     @State private var isVideo: Bool = false
     @State private var itemTransition: TransitionType = .dissolve
+    @State private var itemTransitionDuration: Double = 0.5
     
     private var item: PlaylistItem? {
         guard itemIndex < playlistManager.items.count else { return nil }
@@ -1499,7 +1502,7 @@ struct MediaItemEditorView: View {
                 
                 // Transition picker
                 Section {
-                    Picker("Transition", selection: $itemTransition) {
+                    Picker("Style", selection: $itemTransition) {
                         ForEach(TransitionType.availableCases, id: \.self) { type in
                             Label(type.displayName, systemImage: type.iconName)
                                 .tag(type)
@@ -1510,10 +1513,27 @@ struct MediaItemEditorView: View {
                         playlistManager.items[itemIndex].transition = newValue
                         playlistManager.savePlaylistToDisk()
                     }
+                    
+                    Text(itemTransition.normalized.description)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Speed")
+                            Spacer()
+                            Text(String(format: "%.1fs", itemTransitionDuration))
+                                .foregroundColor(.secondary)
+                        }
+                        Slider(value: $itemTransitionDuration, in: 0.2...2.0, step: 0.1)
+                            .onChange(of: itemTransitionDuration) { _, newValue in
+                                guard itemIndex < playlistManager.items.count else { return }
+                                playlistManager.items[itemIndex].transitionDuration = newValue
+                                playlistManager.savePlaylistToDisk()
+                            }
+                    }
                 } header: {
-                    Text("Transition")
-                } footer: {
-                    Text("Animation when leaving this item")
+                    Label("Transition", systemImage: "arrow.right.arrow.left")
                 }
             }
             .navigationTitle("Edit Item")
@@ -1536,6 +1556,7 @@ struct MediaItemEditorView: View {
         itemName = item.name
         duration = item.duration
         itemTransition = item.transition.normalized
+        itemTransitionDuration = item.transitionDuration
         
         if case .video = item.contentType {
             isVideo = true

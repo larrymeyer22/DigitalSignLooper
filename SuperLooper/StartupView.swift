@@ -178,7 +178,7 @@ struct StartupView: View {
                 .foregroundStyle(.white)
                 .shadow(color: .black.opacity(0.3), radius: 10)
             
-            Text("Super Looper")
+            Text("DigitalSignLooper")
                 .font(.system(size: 42, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
             

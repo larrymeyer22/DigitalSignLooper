@@ -170,17 +170,81 @@ class PlaylistManager: ObservableObject {
     
     var nextItem: PlaylistItem? {
         guard !items.isEmpty else { return nil }
-        let nextIndex = (currentIndex + 1) % items.count
-        return items[nextIndex]
+        if let nextIndex = nextVisibleIndex(after: currentIndex) {
+            return items[nextIndex]
+        }
+        return nil
     }
     
     var hasItems: Bool { !items.isEmpty }
     var itemCount: Int { items.count }
     
+    /// All non-hidden items
+    var visibleItems: [PlaylistItem] {
+        items.filter { !$0.isHidden }
+    }
+    
+    /// Count of visible items
+    var visibleItemCount: Int {
+        visibleItems.count
+    }
+    
     // MARK: - Initialization
     
     init(items: [PlaylistItem] = []) {
         self.items = items
+    }
+    
+    // MARK: - Hidden Item Navigation Helpers
+    
+    /// Find the next visible item index after the given index
+    private func nextVisibleIndex(after index: Int) -> Int? {
+        guard !items.isEmpty else { return nil }
+        
+        var next = (index + 1) % items.count
+        let startIndex = next
+        var iterations = 0
+        let maxIterations = items.count
+        
+        while iterations < maxIterations {
+            if !items[next].isHidden {
+                return next
+            }
+            next = (next + 1) % items.count
+            iterations += 1
+            
+            // Check if we've wrapped around
+            if next == startIndex {
+                break
+            }
+        }
+        
+        return nil // All items are hidden
+    }
+    
+    /// Find the previous visible item index before the given index
+    private func previousVisibleIndex(before index: Int) -> Int? {
+        guard !items.isEmpty else { return nil }
+        
+        var prev = (index - 1 + items.count) % items.count
+        let startIndex = prev
+        var iterations = 0
+        let maxIterations = items.count
+        
+        while iterations < maxIterations {
+            if !items[prev].isHidden {
+                return prev
+            }
+            prev = (prev - 1 + items.count) % items.count
+            iterations += 1
+            
+            // Check if we've wrapped around
+            if prev == startIndex {
+                break
+            }
+        }
+        
+        return nil // All items are hidden
     }
     
     // MARK: - Preloading
@@ -297,15 +361,19 @@ class PlaylistManager: ObservableObject {
     
     func next() {
         guard hasItems else { return }
-        performTransition {
-            self.currentIndex = (self.currentIndex + 1) % self.items.count
+        if let nextIndex = nextVisibleIndex(after: currentIndex) {
+            performTransition {
+                self.currentIndex = nextIndex
+            }
         }
     }
     
     func previous() {
         guard hasItems else { return }
-        performTransition {
-            self.currentIndex = (self.currentIndex - 1 + self.items.count) % self.items.count
+        if let prevIndex = previousVisibleIndex(before: currentIndex) {
+            performTransition {
+                self.currentIndex = prevIndex
+            }
         }
     }
     
@@ -660,6 +728,34 @@ class PlaylistManager: ObservableObject {
     func updateItemName(at index: Int, name: String) {
         guard index >= 0, index < items.count else { return }
         items[index].name = name
+        savePlaylistToDisk()
+    }
+    
+    func toggleItemHidden(at index: Int) {
+        guard index >= 0, index < items.count else { return }
+        items[index].isHidden.toggle()
+        
+        // If we just hid the current item, advance to next visible
+        if index == currentIndex && items[index].isHidden {
+            if let nextIndex = nextVisibleIndex(after: currentIndex) {
+                currentIndex = nextIndex
+            }
+        }
+        
+        savePlaylistToDisk()
+    }
+    
+    func setItemHidden(at index: Int, hidden: Bool) {
+        guard index >= 0, index < items.count else { return }
+        items[index].isHidden = hidden
+        
+        // If we just hid the current item, advance to next visible
+        if index == currentIndex && hidden {
+            if let nextIndex = nextVisibleIndex(after: currentIndex) {
+                currentIndex = nextIndex
+            }
+        }
+        
         savePlaylistToDisk()
     }
     

@@ -10,6 +10,10 @@ import SwiftUI
 import Combine
 import UniformTypeIdentifiers
 
+#if canImport(Darwin)
+import Darwin
+#endif
+
 /// Type alias for compatibility with views using PlaylistInfo
 typealias PlaylistInfo = Playlist
 
@@ -641,6 +645,13 @@ extension PlaylistStorageManager {
     }
     
     // MARK: - Import
+    
+    /// Import a playlist from a ZIP file
+    func importPlaylistFromZip(at zipURL: URL) async throws -> Playlist {
+        // On iOS, we can't reliably extract zips programmatically due to sandboxing
+        // Instead, tell the user to extract it first
+        throw StorageError.importFailed("Please extract the ZIP file first:\n\n1. Open Files app\n2. Tap and hold on the .zip file\n3. Select 'Uncompress'\n4. Then import the uncompressed folder")
+    }
     
     /// Import a playlist from a JSON file URL
     /// When user selects playlist.json directly, we only have access to that file

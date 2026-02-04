@@ -1027,6 +1027,9 @@ struct PlaylistSidebarView: View {
                                 selectedItemIndex = index
                                 playlistManager.jumpTo(index: index)
                                 showEditSheet = true
+                            },
+                            onToggleHidden: {
+                                playlistManager.toggleItemHidden(at: index)
                             }
                         )
                         .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
@@ -1153,6 +1156,7 @@ struct PlaylistItemRow: View {
     var isEditable: Bool = false
     var onDelete: (() -> Void)? = nil
     var onEdit: (() -> Void)? = nil
+    var onToggleHidden: (() -> Void)? = nil
     
     var body: some View {
         HStack(spacing: 12) {
@@ -1164,6 +1168,13 @@ struct PlaylistItemRow: View {
                         .foregroundColor(.red)
                 }
                 .buttonStyle(.plain)
+                
+                Button(action: { onToggleHidden?() }) {
+                    Image(systemName: item.isHidden ? "eye.slash.fill" : "eye.fill")
+                        .font(.caption)
+                        .foregroundColor(item.isHidden ? .orange : .gray)
+                }
+                .buttonStyle(.plain)
             }
             
             // Index number
@@ -1173,6 +1184,12 @@ struct PlaylistItemRow: View {
                     .fontWeight(.medium)
                     .foregroundColor(isActive ? .blue : .gray)
                     .frame(width: 24)
+                
+                if item.isHidden {
+                    Image(systemName: "eye.slash.fill")
+                        .font(.caption2)
+                        .foregroundColor(.orange)
+                }
             }
             
             // Type icon
@@ -1254,6 +1271,7 @@ struct PlaylistItemRow: View {
             }
         )
         .cornerRadius(8)
+        .opacity(item.isHidden ? 0.5 : 1.0)
         .padding(.horizontal, 8)
     }
     

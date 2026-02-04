@@ -13,11 +13,13 @@ enum TransitionType: String, Codable, CaseIterable {
     case dissolve = "dissolve"   // Cross-dissolve (opacity fade)
     case pushLeft = "pushLeft"   // New content pushes from right, old exits left
     case pushRight = "pushRight" // New content pushes from left, old exits right
+    case pushUp = "pushUp"       // New content pushes from bottom, old exits top
+    case pushDown = "pushDown"   // New content pushes from top, old exits bottom
     case fade = "fade"           // Legacy — treated as dissolve
     
     /// Cases shown in UI pickers (excludes legacy)
     static var availableCases: [TransitionType] {
-        [.cut, .dissolve, .pushLeft, .pushRight]
+        [.cut, .dissolve, .pushLeft, .pushRight, .pushUp, .pushDown]
     }
     
     /// Human-readable name
@@ -27,6 +29,8 @@ enum TransitionType: String, Codable, CaseIterable {
         case .dissolve: return "Dissolve"
         case .pushLeft: return "Push Left"
         case .pushRight: return "Push Right"
+        case .pushUp: return "Push Up"
+        case .pushDown: return "Push Down"
         case .fade: return "Dissolve"  // Legacy label
         }
     }
@@ -38,6 +42,8 @@ enum TransitionType: String, Codable, CaseIterable {
         case .dissolve: return "circle.dotted"
         case .pushLeft: return "arrow.left.square"
         case .pushRight: return "arrow.right.square"
+        case .pushUp: return "arrow.up.square"
+        case .pushDown: return "arrow.down.square"
         case .fade: return "circle.dotted"
         }
     }
@@ -49,6 +55,8 @@ enum TransitionType: String, Codable, CaseIterable {
         case .dissolve: return "Cross-dissolve between items"
         case .pushLeft: return "New content pushes in from the right"
         case .pushRight: return "New content pushes in from the left"
+        case .pushUp: return "New content pushes in from the bottom"
+        case .pushDown: return "New content pushes in from the top"
         case .fade: return "Cross-dissolve between items"
         }
     }

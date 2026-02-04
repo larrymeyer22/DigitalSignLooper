@@ -116,11 +116,12 @@ struct ExternalScreenView: View {
             let isT = playlistManager.isTransitioning
             let hasPrev = playlistManager.previousItem != nil
             let w = geometry.size.width
+            let h = geometry.size.height
             
             let prevOpacity: Double = {
                 guard isT else { return 1.0 }
                 switch transType {
-                case .pushLeft, .pushRight: return 1.0
+                case .pushLeft, .pushRight, .pushUp, .pushDown: return 1.0
                 default: return 0.0
                 }
             }()
@@ -132,6 +133,14 @@ struct ExternalScreenView: View {
                 default: return 0
                 }
             }()
+            let prevOffsetY: CGFloat = {
+                guard isT else { return 0 }
+                switch transType {
+                case .pushUp: return -h
+                case .pushDown: return h
+                default: return 0
+                }
+            }()
             let currOffsetX: CGFloat = {
                 guard hasPrev else { return 0 }
                 switch transType {
@@ -140,10 +149,18 @@ struct ExternalScreenView: View {
                 default: return 0
                 }
             }()
+            let currOffsetY: CGFloat = {
+                guard hasPrev else { return 0 }
+                switch transType {
+                case .pushUp: return isT ? 0 : h
+                case .pushDown: return isT ? 0 : -h
+                default: return 0
+                }
+            }()
             let transAnimation: Animation = {
                 switch transType {
                 case .cut: return .linear(duration: 0)
-                case .pushLeft, .pushRight: return .easeInOut(duration: transDur)
+                case .pushLeft, .pushRight, .pushUp, .pushDown: return .easeInOut(duration: transDur)
                 default: return .linear(duration: transDur)
                 }
             }()
@@ -158,7 +175,7 @@ struct ExternalScreenView: View {
                         ContentViewCapture(playlistManager: playlistManager, isExternal: true)
                     }
                     .id("ext-current-\(item.id)")
-                    .offset(x: currOffsetX)
+                    .offset(x: currOffsetX, y: currOffsetY)
                     .animation(transAnimation, value: playlistManager.isTransitioning)
                 }
                 
@@ -167,7 +184,7 @@ struct ExternalScreenView: View {
                     contentView(for: previous, size: geometry.size, isOutgoing: true)
                         .id("ext-previous-\(previous.id)")
                         .opacity(prevOpacity)
-                        .offset(x: prevOffsetX)
+                        .offset(x: prevOffsetX, y: prevOffsetY)
                         .animation(transAnimation, value: playlistManager.isTransitioning)
                 }
                 

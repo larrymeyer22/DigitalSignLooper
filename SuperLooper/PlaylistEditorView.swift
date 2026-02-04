@@ -101,6 +101,17 @@ struct PlaylistEditorView: View {
                     .onTapGesture {
                         editingItem = item
                     }
+                    .swipeActions(edge: .leading) {
+                        Button {
+                            toggleHidden(item)
+                        } label: {
+                            Label(
+                                item.isHidden ? "Show" : "Hide",
+                                systemImage: item.isHidden ? "eye" : "eye.slash"
+                            )
+                        }
+                        .tint(.orange)
+                    }
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         Button(role: .destructive) {
                             itemToDelete = item
@@ -133,6 +144,12 @@ struct PlaylistEditorView: View {
         }
     }
     
+    private func toggleHidden(_ item: PlaylistItem) {
+        if let index = playlistManager.items.firstIndex(where: { $0.id == item.id }) {
+            playlistManager.toggleItemHidden(at: index)
+        }
+    }
+    
     private func addSampleContent() {
         // Add a sample HTML item for testing
         let sampleHTML = """
@@ -160,17 +177,36 @@ struct PlaylistEditorRow: View {
     
     var body: some View {
         HStack(spacing: 12) {
+            // Hidden indicator
+            if item.isHidden {
+                Image(systemName: "eye.slash.fill")
+                    .font(.caption)
+                    .foregroundColor(.orange)
+                    .frame(width: 20)
+            } else {
+                Color.clear.frame(width: 20)
+            }
+            
             // Type icon
             Image(systemName: item.contentType.iconName)
                 .font(.title2)
-                .foregroundColor(.blue)
+                .foregroundColor(item.isHidden ? .gray : .blue)
                 .frame(width: 36)
             
             // Item info
             VStack(alignment: .leading, spacing: 4) {
-                Text(item.name)
-                    .font(.body)
-                    .fontWeight(.medium)
+                HStack(spacing: 6) {
+                    Text(item.name)
+                        .font(.body)
+                        .fontWeight(.medium)
+                        .foregroundColor(item.isHidden ? .secondary : .primary)
+                    
+                    if item.isHidden {
+                        Text("(Hidden)")
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                    }
+                }
                 
                 HStack(spacing: 8) {
                     Text(item.contentType.typeName)
@@ -212,6 +248,7 @@ struct PlaylistEditorRow: View {
                 .foregroundColor(.secondary)
         }
         .padding(.vertical, 4)
+        .opacity(item.isHidden ? 0.5 : 1.0)
     }
 }
 
@@ -226,12 +263,27 @@ struct ItemEditorView: View {
     @State private var duration: Double = 10
     @State private var transition: TransitionType = .dissolve
     @State private var transitionDuration: Double = 0.5
+    @State private var isHidden: Bool = false
     
     var body: some View {
         NavigationStack {
             Form {
                 Section("Name") {
                     TextField("Item name", text: $name)
+                }
+                
+                Section {
+                    Toggle(isOn: $isHidden) {
+                        Label(
+                            isHidden ? "Hidden from playlist" : "Visible in playlist",
+                            systemImage: isHidden ? "eye.slash" : "eye"
+                        )
+                    }
+                    .tint(.orange)
+                } header: {
+                    Text("Visibility")
+                } footer: {
+                    Text("Hidden items will be skipped during playback, like hiding slides in PowerPoint")
                 }
                 
                 Section("Display Duration") {
@@ -335,6 +387,7 @@ struct ItemEditorView: View {
                 duration = item.duration
                 transition = item.transition.normalized
                 transitionDuration = item.transitionDuration
+                isHidden = item.isHidden
             }
         }
     }
@@ -349,6 +402,7 @@ struct ItemEditorView: View {
         updatedItem.duration = duration
         updatedItem.transition = transition
         updatedItem.transitionDuration = transitionDuration
+        updatedItem.isHidden = isHidden
         
         playlistManager.items[index] = updatedItem
         playlistManager.savePlaylist()

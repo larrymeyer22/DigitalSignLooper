@@ -161,10 +161,10 @@ struct BrandSettings: Codable, Equatable {
     // MARK: - Initializers
     
     init(
-        primaryColor: String = "#0066CC",
-        secondaryColor: String = "#FF6B35",
-        accentColor: String = "#FFD700",
-        backgroundColor: String = "#1A1A2E",
+        primaryColor: String = "#CC0000",
+        secondaryColor: String = "#8B0000",
+        accentColor: String = "#CC0000",
+        backgroundColor: String = "#1A1A1A",
         textColor: String = "#FFFFFF",
         subtitleColor: String = "#CCCCCC",
         titleFont: FontFamily = .system,
@@ -326,14 +326,6 @@ extension BrandSettings {
             textColor: "#FFFFFF",
             subtitleColor: "#888888"
         ),
-        "Clean Light": BrandSettings(
-            primaryColor: "#2563EB",
-            secondaryColor: "#64748B",
-            accentColor: "#F59E0B",
-            backgroundColor: "#F8FAFC",
-            textColor: "#1E293B",
-            subtitleColor: "#64748B"
-        ),
         "Vibrant": BrandSettings(
             primaryColor: "#FF6B35",
             secondaryColor: "#F7C59F",
@@ -357,14 +349,6 @@ extension BrandSettings {
             backgroundColor: "#1A1A1A",
             textColor: "#FFFFFF",
             subtitleColor: "#CCCCCC"
-        ),
-        "Kelly Green & Gold": BrandSettings(
-            primaryColor: "#4CBB17",
-            secondaryColor: "#228B22",
-            accentColor: "#FFD700",
-            backgroundColor: "#FFFFFF",
-            textColor: "#1A1A1A",
-            subtitleColor: "#4A4A4A"
         ),
         "Navy & Lime": BrandSettings(
             primaryColor: "#001F5C",

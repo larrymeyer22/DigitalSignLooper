@@ -6,7 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		B98C1B032F32F40A00338360 /* AirDropPlaylistPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = B98C1B022F32F40A00338360 /* AirDropPlaylistPicker.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		B98C1B012F32ED4600338360 /* DigitalSignLooper-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "DigitalSignLooper-Info.plist"; sourceTree = "<group>"; };
+		B98C1B022F32F40A00338360 /* AirDropPlaylistPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AirDropPlaylistPicker.swift; path = DigitalSignLooper.xcodeproj/AirDropPlaylistPicker.swift; sourceTree = "<group>"; };
 		B99FBA572F1C3F9400B69AE5 /* DigitalSignLooper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DigitalSignLooper.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B9BCBA992F30579800C15C16 /* DigitalSignLooper.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DigitalSignLooper.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -33,6 +39,8 @@
 		B99FBA4E2F1C3F9400B69AE5 = {
 			isa = PBXGroup;
 			children = (
+				B98C1B022F32F40A00338360 /* AirDropPlaylistPicker.swift */,
+				B98C1B012F32ED4600338360 /* DigitalSignLooper-Info.plist */,
 				B9BCBA992F30579800C15C16 /* DigitalSignLooper.entitlements */,
 				B99FBA592F1C3F9400B69AE5 /* SuperLooper */,
 				B99FBA582F1C3F9400B69AE5 /* Products */,
@@ -121,6 +129,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B98C1B032F32F40A00338360 /* AirDropPlaylistPicker.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -260,7 +269,9 @@
 				DEVELOPMENT_TEAM = Y269EE926Y;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "DigitalSignLooper-Info.plist";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -296,7 +307,9 @@
 				DEVELOPMENT_TEAM = Y269EE926Y;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "DigitalSignLooper-Info.plist";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

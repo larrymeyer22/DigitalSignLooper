@@ -118,17 +118,14 @@ struct StartupView: View {
         case .success(let urls):
             guard let url = urls.first else { return }
             
-            // Check if it's a zip file
-            if url.pathExtension.lowercased() == "zip" {
-                importError = "Please unzip the file first:\n\n1. Open Files app\n2. Find the .zip file\n3. Tap and hold → Uncompress\n4. Then import the folder or playlist.json"
-                return
-            }
-            
             Task { @MainActor in
                 do {
                     let imported: Playlist
                     
-                    if url.pathExtension.lowercased() == "json" {
+                    if url.pathExtension.lowercased() == "zip" {
+                        // Handle zip file automatically
+                        imported = try await PlaylistStorageManager.shared.importPlaylistFromZip(at: url)
+                    } else if url.pathExtension.lowercased() == "json" {
                         // User selected playlist.json directly
                         imported = try await PlaylistStorageManager.shared.importPlaylistFromJSON(at: url)
                     } else {
